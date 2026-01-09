@@ -40,6 +40,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+.pnpm-store/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
@@ -137,3 +138,32 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+
+
+
+
+
+# build outputs
+dist/
+dist-electron/
+release/
+out/
+build/
+*.log
+
+# Vite/Electron caches
+.vite/
+.cache/
+.tmp/
+temp/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# env files
+.env
+.env.*
