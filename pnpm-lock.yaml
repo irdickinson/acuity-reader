@@ -39,7 +39,7 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0
       electron:
-        specifier: ^30.5.1
+        specifier: 30.5.1
         version: 30.5.1
       electron-builder:
         specifier: ^24.13.3
@@ -2559,7 +2559,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 20.19.27
+      '@types/node': 25.0.3
       '@types/responselike': 1.0.3
 
   '@types/debug@4.1.12':
@@ -2576,7 +2576,7 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 20.19.27
+      '@types/node': 25.0.3
 
   '@types/ms@2.1.0': {}
 
@@ -2607,14 +2607,14 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 20.19.27
+      '@types/node': 25.0.3
 
   '@types/verror@1.10.11':
     optional: true
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 20.19.27
+      '@types/node': 25.0.3
     optional: true
 
   '@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)':

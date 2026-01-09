@@ -1,7 +1,10 @@
 {
   "name": "desktop",
+  "productName": "Acuity Reader",
   "private": true,
   "version": "0.0.0",
+  "description": "A local-first reader mode desktop app that turns cluttered web pages into clean, accessible reading views.",
+  "author": "Isaac <isaacrdickinson@gmail.com>",
   "type": "module",
   "scripts": {
     "dev:renderer": "vite",
@@ -29,7 +32,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "electron": "^30.5.1",
+    "electron": "30.5.1",
     "electron-builder": "^24.13.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -39,6 +42,22 @@
     "vite-plugin-electron": "^0.28.6",
     "vite-plugin-electron-renderer": "^0.14.5",
     "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.<yourname>.acuityreader",
+    "productName": "Acuity Reader",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": ["nsis"]
+    }
   },
   "main": "dist-electron/main.js"
 }

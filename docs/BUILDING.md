@@ -1,0 +1,1 @@
+Windows packaging requires node-linker=hoisted to avoid NSIS path issues with pnpm.
