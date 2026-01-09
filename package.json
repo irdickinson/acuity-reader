@@ -1,0 +1,10 @@
+{
+  "name": "acuity-reader",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -b",
+    "format": "prettier . --write"
+  }
+}
