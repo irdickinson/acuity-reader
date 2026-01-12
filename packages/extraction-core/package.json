@@ -1,0 +1,23 @@
+{
+  "name": "@acuity/extraction-core",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "acuity-extract": "dist/bin/extract.js"
+  },
+    "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "pnpm build && node dist/bin/extract.js ./test-pages/sample-simple.html",
+    "extract": "pnpm build && node dist/bin/extract.js"
+    },
+  "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "linkedom": "^0.18.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}
