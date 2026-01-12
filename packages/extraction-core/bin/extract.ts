@@ -20,5 +20,10 @@ console.log(JSON.stringify({
   excerpt: article.excerpt,
   length: article.length,
   lang: article.lang,
-  siteName: article.siteName
+  siteName: article.siteName,
+
+  // health / guardrail proof
+  contentHtmlChars: article.contentHtml.length,
+  textContentChars: article.textContent?.length ?? 0,
+  usedFallback: article.contentHtml.startsWith("<pre>")
 }, null, 2));
