@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>UGLY TEST PAGE — Acuity Reader</title>
+
+    <!-- Things we want stripped -->
+    <script>
+      console.log("tracking script");
+      window.__evil = true;
+    </script>
+
+    <style>
+      body { font-family: Comic Sans MS; }
+      .ad { position: fixed; top: 0; left: 0; width: 100%; background: yellow; }
+    </style>
+
+    <link rel="stylesheet" href="https://evil.example/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <body onclick="alert('inline handler should be stripped')">
+    <div class="ad" onclick="alert('ad click')">
+      BUY NOW — <a href="javascript:alert('nope')">click me</a>
+      <iframe src="https://evil.example/frame"></iframe>
+    </div>
+
+    <h1 onclick="alert('nope')">Acuity Reader Guardrails Test</h1>
+    <p>
+      This page intentionally contains junk: scripts, iframes, inline handlers, and javascript: URLs.
+      The extractor should remove them and still produce readable content.
+    </p>
+
+    <noscript>You shouldn't see this in output either.</noscript>
+
+    <h2>Real-ish content starts here</h2>
+    <p>
+      Nouns, verbs, and other parts of speech exist, but this test page isn’t about grammar.
+      It’s about making sure your extraction pipeline doesn’t choke when the input is annoying.
+    </p>
+
+    <p>
+      Below is a big wall of repetitive text to test input/output clamping. If the extractor
+      returns something, great. If it returns a fallback, also fine — as long as it does it reliably.
+    </p>
+
+    <hr />
+
+    <div id="wall">
+      <!-- Repetitive bulk text to simulate bloat -->
+      <p>LOREM BULK 0001: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0002: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0003: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0004: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0005: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0006: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0007: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0008: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0009: The quick brown fox jumps over the lazy dog.</p>
+      <p>LOREM BULK 0010: The quick brown fox jumps over the lazy dog.</p>
+
+      <!-- Add a couple extra nasty bits -->
+      <p><a href="javascript:alert('still nope')">Another javascript link</a></p>
+      <p><img src="javascript:alert('nope')" alt="bad img src" /></p>
+
+      <script>
+        // More script junk
+        document.body.insertAdjacentHTML("beforeend", "<p>Injected content</p>");
+      </script>
+    </div>
+
+    <footer onclick="alert('nope')">
+      <p>Footer tracking pixel: <img src="https://evil.example/pixel" alt="" /></p>
+    </footer>
+  </body>
+</html>
