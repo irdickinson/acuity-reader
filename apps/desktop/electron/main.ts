@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 import { existsSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url"; // make sure both are present
 
+import { ipcMain } from "electron";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // The built directory structure
@@ -95,6 +97,33 @@ async function runExtractionSelfTest() {
 
 
 
+function registerReaderIpc() {
+  ipcMain.handle("reader:extractFromHtml", async (_event, html: string) => {
+    // Lazy-load extraction module so dev doesn't crash if not built.
+    const repoRoot = path.resolve(process.env.APP_ROOT!, "../..");
+    const entryAbs = path.join(repoRoot, "packages/extraction-core/dist/src/index.js");
+
+    // Import by file URL + vite-ignore to avoid bundler inlining.
+    const mod = await import(/* @vite-ignore */ pathToFileURL(entryAbs).href);
+    const extractReadable = mod.extractReadable as (h: string, opts?: any) => any;
+
+    const article = extractReadable(html, { minTextLength: 200 });
+
+    // Return only serializable data
+    return {
+      title: article.title,
+      byline: article.byline,
+      excerpt: article.excerpt,
+      contentHtml: article.contentHtml,
+      textContent: article.textContent,
+      length: article.length,
+      siteName: article.siteName,
+      lang: article.lang,
+    };
+  });
+}
+
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
@@ -107,6 +136,7 @@ app.on('window-all-closed', () => {
 
 
 app.whenReady().then(async () => {
+  registerReaderIpc();
   try { await runExtractionSelfTest(); } catch {}
   createWindow();
 });

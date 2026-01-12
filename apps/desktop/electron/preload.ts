@@ -1,24 +1,18 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from "electron";
+import type { ReaderArticle } from "../src/shared/ipc";
 
-// --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
-    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
+contextBridge.exposeInMainWorld("acuity", {
+  reader: {
+    extractFromHtml: (html: string): Promise<ReaderArticle> =>
+      ipcRenderer.invoke("reader:extractFromHtml", html),
   },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
-  },
-  send(...args: Parameters<typeof ipcRenderer.send>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.send(channel, ...omit)
-  },
-  invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.invoke(channel, ...omit)
-  },
+});
 
-  // You can expose other APTs you need here.
-  // ...
-})
+// Optional: keep a tiny debug channel, but don't expose raw ipcRenderer.
+contextBridge.exposeInMainWorld("acuityDebug", {
+  onMessage: (cb: (msg: string) => void) => {
+    const listener = (_event: unknown, msg: string) => cb(msg);
+    ipcRenderer.on("main-process-message", listener);
+    return () => ipcRenderer.off("main-process-message", listener);
+  },
+});
