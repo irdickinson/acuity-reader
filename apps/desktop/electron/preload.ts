@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld("acuity", {
   reader: {
     extractFromHtml: (html: string): Promise<ReaderArticle> =>
       ipcRenderer.invoke("reader:extractFromHtml", html),
+    extractFromUrl: (url: string): Promise<ReaderArticle> =>
+      ipcRenderer.invoke("reader:extractFromUrl", url),
   },
 });
 
@@ -16,3 +18,4 @@ contextBridge.exposeInMainWorld("acuityDebug", {
     return () => ipcRenderer.off("main-process-message", listener);
   },
 });
+

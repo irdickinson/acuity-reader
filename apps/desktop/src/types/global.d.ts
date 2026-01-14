@@ -15,5 +15,3 @@ declare global {
 }
 
 export {};
-
-// might need to remove for the one in types/

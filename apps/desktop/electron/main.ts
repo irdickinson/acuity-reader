@@ -1,10 +1,10 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { readFileSync } from "node:fs";
 import { existsSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url"; // make sure both are present
 
-import { ipcMain } from "electron";
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +27,13 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
+
+
+const IPC_CHANNELS = {
+  extractFromHtml: "reader:extractFromHtml",
+  extractFromUrl: "reader:extractFromUrl",
+} as const;
+
 
 function createWindow() {
   win = new BrowserWindow({
@@ -96,20 +103,74 @@ async function runExtractionSelfTest() {
 }
 
 
+async function fetchHtml(url: string): Promise<string> {
+  // Basic validation
+  const u = new URL(url);
+  if (u.protocol !== "http:" && u.protocol !== "https:") {
+    throw new Error("Only http/https URLs are allowed.");
+  }
+
+  const res = await fetch(u.href, {
+    redirect: "follow",
+    headers: {
+      // Some sites serve different HTML without a UA
+      "User-Agent": "AcuityReader/0.0 (Electron)",
+      "Accept": "text/html,application/xhtml+xml",
+    },
+  });
+
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+
+  const ct = res.headers.get("content-type") ?? "";
+  if (!ct.includes("text/html") && !ct.includes("application/xhtml+xml")) {
+    // still allow, but warn by failing fast for now
+    throw new Error(`Unexpected content-type: ${ct}`);
+  }
+
+  return await res.text();
+}
+
+
+// function registerReaderIpc() {
+//   console.log("[Acuity][IPC] Registering handlers...");
+
+//   ipcMain.handle(IPC_CHANNELS.extractFromHtml, async (_event, html: string) => {
+
+//     return {
+//       title: "IPC OK",
+//       excerpt: html.slice(0, 60),
+//       contentHtml: `<p>IPC OK</p><pre>${escapeHtml(html.slice(0, 200))}</pre>`,
+//     };
+//   });
+
+//   console.log("[Acuity][IPC] Handler ready:", IPC_CHANNELS.extractFromHtml);
+// }
+
+// function escapeHtml(s: string): string {
+//   return s
+//     .replaceAll("&", "&amp;")
+//     .replaceAll("<", "&lt;")
+//     .replaceAll(">", "&gt;")
+//     .replaceAll('"', "&quot;")
+//     .replaceAll("'", "&#039;");
+// }
 
 function registerReaderIpc() {
-  ipcMain.handle("reader:extractFromHtml", async (_event, html: string) => {
-    // Lazy-load extraction module so dev doesn't crash if not built.
+  async function loadExtractor() {
     const repoRoot = path.resolve(process.env.APP_ROOT!, "../..");
     const entryAbs = path.join(repoRoot, "packages/extraction-core/dist/src/index.js");
 
-    // Import by file URL + vite-ignore to avoid bundler inlining.
     const mod = await import(/* @vite-ignore */ pathToFileURL(entryAbs).href);
     const extractReadable = mod.extractReadable as (h: string, opts?: any) => any;
 
-    const article = extractReadable(html, { minTextLength: 200 });
+    if (!extractReadable) {
+      throw new Error("extractReadable export not found in extraction-core.");
+    }
 
-    // Return only serializable data
+    return extractReadable;
+  }
+
+  function shapeArticle(article: any) {
     return {
       title: article.title,
       byline: article.byline,
@@ -120,6 +181,19 @@ function registerReaderIpc() {
       siteName: article.siteName,
       lang: article.lang,
     };
+  }
+
+  ipcMain.handle("reader:extractFromHtml", async (_event, html: string) => {
+    const extractReadable = await loadExtractor();
+    const article = extractReadable(html, { minTextLength: 200 });
+    return shapeArticle(article);
+  });
+
+  ipcMain.handle("reader:extractFromUrl", async (_event, url: string) => {
+    const html = await fetchHtml(url);
+    const extractReadable = await loadExtractor();
+    const article = extractReadable(html, { minTextLength: 200 });
+    return shapeArticle(article);
   });
 }
 
