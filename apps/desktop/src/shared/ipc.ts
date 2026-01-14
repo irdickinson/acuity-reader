@@ -1,3 +1,5 @@
+
+
 export type ReaderArticle = {
   title: string;
   byline?: string;
@@ -15,6 +17,3 @@ export const IPC = {
 } as const;
 
 export type IpcChannels = typeof IPC[keyof typeof IPC];
-
-
-// might need to go to the one in shared/
