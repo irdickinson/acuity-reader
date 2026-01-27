@@ -1,4 +1,4 @@
-import type { ReaderArticle, SavedArticle, SaveArticleInput } from "../shared/ipc";
+import type { ReaderArticle, SavedArticle, SaveArticleInput } from "./shared/ipc";
 
 declare global {
   interface Window {
@@ -15,7 +15,6 @@ declare global {
       };
     };
 
-    // optional debug channel if you kept it
     acuityDebug?: {
       onMessage(cb: (msg: string) => void): () => void;
     };

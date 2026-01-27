@@ -52,8 +52,9 @@ export function ReaderView() {
 
       setArticle(result);
       setStatus("OK");
-    } catch (e: any) {
-      setStatus(`ERROR: ${e?.message ?? String(e)}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setStatus(`ERROR: ${msg}`);
     }
   }
 

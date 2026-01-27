@@ -1,0 +1,10 @@
+**/dist/**
+**/dist-electron/**
+**/release/**
+**/out/**
+
+**/node_modules/**
+**/.vite/**
+**/.turbo/**
+**/.next/**
+**/.cache/**

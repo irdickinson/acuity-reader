@@ -30,7 +30,7 @@ importers:
         specifier: ^3.7.4
         version: 3.7.4
       typescript:
-        specifier: ^5.2.2
+        specifier: ^5.5.4
         version: 5.9.3
 
   apps/desktop:

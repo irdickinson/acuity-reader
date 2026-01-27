@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url"; // make sure both are present
 import { JsonArticleStore } from "./library/jsonStore";
 import type { SaveArticleInput } from "../src/shared/ipc";
+import type { ReaderArticle } from "../src/shared/ipc";
 
 
 
@@ -30,6 +31,11 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null
 let articleStore: JsonArticleStore | null = null;
+
+
+
+type ExtractOptions = { minTextLength?: number };
+type ExtractReadable = (html: string, opts?: ExtractOptions) => ReaderArticle;
 
 // const IPC_CHANNELS = {
 //   extractFromHtml: "reader:extractFromHtml",
@@ -80,7 +86,7 @@ async function runExtractionSelfTest() {
     }
 
     const mod = await import(/* @vite-ignore */ pathToFileURL(entryAbs).href);
-    const extractReadable = mod.extractReadable as (html: string, opts?: any) => any;
+    const extractReadable = mod.extractReadable as ExtractReadable;
 
     const fixtureAbs = path.join(repoRoot, "packages/extraction-core/test-pages/sample-ugly.html");
 
@@ -163,7 +169,7 @@ function registerReaderIpc() {
     const entryAbs = path.join(repoRoot, "packages/extraction-core/dist/src/index.js");
 
     const mod = await import(/* @vite-ignore */ pathToFileURL(entryAbs).href);
-    const extractReadable = mod.extractReadable as (h: string, opts?: any) => any;
+    const extractReadable = mod.extractReadable as ExtractReadable;
 
     if (!extractReadable) {
       throw new Error("extractReadable export not found in extraction-core.");
@@ -172,7 +178,7 @@ function registerReaderIpc() {
     return extractReadable;
   }
 
-  function shapeArticle(article: any) {
+  function shapeArticle(article: ReaderArticle): ReaderArticle {
     return {
       title: article.title,
       byline: article.byline,
@@ -234,7 +240,9 @@ app.on('window-all-closed', () => {
 
 app.whenReady().then(async () => {
   registerReaderIpc();
-  try { await runExtractionSelfTest(); } catch {}
+  try { await runExtractionSelfTest(); } catch {
+    // Intentionally ignore dev for now
+  }
   articleStore = new JsonArticleStore(app.getPath("userData"));
   registerLibraryIpc();
   createWindow();
