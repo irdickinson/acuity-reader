@@ -3,6 +3,8 @@ import path from "node:path";
 import { readFileSync } from "node:fs";
 import { existsSync } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url"; // make sure both are present
+import { JsonArticleStore } from "./library/jsonStore";
+import type { SaveArticleInput } from "../src/shared/ipc";
 
 
 
@@ -27,7 +29,7 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
-
+let articleStore: JsonArticleStore | null = null;
 
 const IPC_CHANNELS = {
   extractFromHtml: "reader:extractFromHtml",
@@ -198,6 +200,27 @@ function registerReaderIpc() {
 }
 
 
+function registerLibraryIpc() {
+  if (!articleStore) throw new Error("articleStore not initialized");
+
+  ipcMain.handle("library:save", async (_event, input: SaveArticleInput) => {
+    return await articleStore!.save(input);
+  });
+
+  ipcMain.handle("library:list", async () => {
+    return await articleStore!.list();
+  });
+
+  ipcMain.handle("library:get", async (_event, id: string) => {
+    return await articleStore!.get(id);
+  });
+
+  ipcMain.handle("library:delete", async (_event, id: string) => {
+    await articleStore!.delete(id);
+    return { ok: true as const };
+  });
+}
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
@@ -212,6 +235,8 @@ app.on('window-all-closed', () => {
 app.whenReady().then(async () => {
   registerReaderIpc();
   try { await runExtractionSelfTest(); } catch {}
+  articleStore = new JsonArticleStore(app.getPath("userData"));
+  registerLibraryIpc();
   createWindow();
 });
 
