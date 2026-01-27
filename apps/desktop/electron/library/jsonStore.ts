@@ -16,8 +16,6 @@ function normalizeUrl(url?: string): string | null {
   if (!url) return null;
   try {
     const u = new URL(url);
-
-    // Normalize: lowercase host, remove hash, remove common tracking params
     u.host = u.host.toLowerCase();
     u.hash = "";
 
@@ -30,13 +28,12 @@ function normalizeUrl(url?: string): string | null {
       if (drop.has(key)) u.searchParams.delete(key);
     }
 
-    // Remove trailing slash for consistency (except root)
     let s = u.toString();
     if (s.endsWith("/") && u.pathname !== "/") s = s.slice(0, -1);
-
     return s;
   } catch {
-    return url.trim() ? url.trim() : null;
+    const trimmed = url.trim();
+    return trimmed ? trimmed : null;
   }
 }
 
@@ -59,7 +56,6 @@ export class JsonArticleStore implements ArticleStore {
 
     const urlKey = normalizeUrl(input.url);
 
-    // If there's a URL, try update-in-place
     if (urlKey) {
       const existing = db.articles.find(a => normalizeUrl(a.url) === urlKey);
       if (existing) {
@@ -74,7 +70,7 @@ export class JsonArticleStore implements ArticleStore {
         existing.lang = input.article.lang;
         existing.updatedAt = now;
 
-        // Move to top (most recent)
+        // move to top (most recently updated)
         db.articles = [existing, ...db.articles.filter(a => a.id !== existing.id)];
 
         this.writeDb(db);
@@ -82,7 +78,6 @@ export class JsonArticleStore implements ArticleStore {
       }
     }
 
-    // Otherwise create new
     const createdAt = now;
     const article: SavedArticle = {
       id: makeId(),
