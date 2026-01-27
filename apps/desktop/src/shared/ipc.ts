@@ -35,3 +35,10 @@ export type SaveArticleInput = {
   url?: string;
   article: ReaderArticle;
 };
+
+
+
+export type SaveResult = {
+  item: SavedArticle;
+  mode: "created" | "updated";
+};

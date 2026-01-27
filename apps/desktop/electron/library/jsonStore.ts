@@ -11,6 +11,36 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+
+function normalizeUrl(url?: string): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+
+    // Normalize: lowercase host, remove hash, remove common tracking params
+    u.host = u.host.toLowerCase();
+    u.hash = "";
+
+    const drop = new Set([
+      "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+      "gclid", "fbclid",
+    ]);
+
+    for (const key of Array.from(u.searchParams.keys())) {
+      if (drop.has(key)) u.searchParams.delete(key);
+    }
+
+    // Remove trailing slash for consistency (except root)
+    let s = u.toString();
+    if (s.endsWith("/") && u.pathname !== "/") s = s.slice(0, -1);
+
+    return s;
+  } catch {
+    return url.trim() ? url.trim() : null;
+  }
+}
+
+
 export class JsonArticleStore implements ArticleStore {
   private filePath: string;
 
@@ -25,8 +55,35 @@ export class JsonArticleStore implements ArticleStore {
 
   async save(input: SaveArticleInput): Promise<SavedArticle> {
     const db = this.readDb();
+    const now = nowIso();
 
-    const createdAt = nowIso();
+    const urlKey = normalizeUrl(input.url);
+
+    // If there's a URL, try update-in-place
+    if (urlKey) {
+      const existing = db.articles.find(a => normalizeUrl(a.url) === urlKey);
+      if (existing) {
+        existing.url = input.url ?? existing.url;
+        existing.title = input.article.title;
+        existing.byline = input.article.byline;
+        existing.excerpt = input.article.excerpt;
+        existing.contentHtml = input.article.contentHtml;
+        existing.textContent = input.article.textContent;
+        existing.length = input.article.length;
+        existing.siteName = input.article.siteName;
+        existing.lang = input.article.lang;
+        existing.updatedAt = now;
+
+        // Move to top (most recent)
+        db.articles = [existing, ...db.articles.filter(a => a.id !== existing.id)];
+
+        this.writeDb(db);
+        return existing;
+      }
+    }
+
+    // Otherwise create new
+    const createdAt = now;
     const article: SavedArticle = {
       id: makeId(),
       url: input.url,
@@ -35,9 +92,7 @@ export class JsonArticleStore implements ArticleStore {
       ...input.article,
     };
 
-    // newest first
     db.articles.unshift(article);
-
     this.writeDb(db);
     return article;
   }
@@ -58,6 +113,7 @@ export class JsonArticleStore implements ArticleStore {
     this.writeDb(db);
   }
 
+  // didn't implement tiny migration
   private readDb(): { articles: SavedArticle[] } {
     try {
       const raw = readFileSync(this.filePath, "utf8");
