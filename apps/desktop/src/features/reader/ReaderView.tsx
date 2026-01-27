@@ -1,5 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReaderArticle } from "../../shared/ipc";
+import { ReaderToolbar } from "./ReaderToolbar";
+import {
+  DEFAULT_READER_SETTINGS,
+  loadReaderSettings,
+  saveReaderSettings,
+  type ReaderSettings,
+} from "./readerSettings";
 
 const DEFAULT_HTML = `<!doctype html>
 <html>
@@ -11,11 +18,20 @@ const DEFAULT_HTML = `<!doctype html>
 </html>`;
 
 export function ReaderView() {
-  const [mode, setMode] = useState<"html" | "url">("html");
-  const [html, setHtml] = useState<string>(DEFAULT_HTML);
+  const [mode, setMode] = useState<"html" | "url">("url");
+  const [html, setHtml] = useState<string>("");
   const [url, setUrl] = useState<string>("https://en.wikipedia.org/wiki/Noun");
   const [status, setStatus] = useState<string>("Idle");
   const [article, setArticle] = useState<ReaderArticle | null>(null);
+
+  const [settings, setSettings] = useState<ReaderSettings>(() => {
+    // localStorage is available in renderer
+    try { return loadReaderSettings(); } catch { return DEFAULT_READER_SETTINGS; }
+  });
+
+  useEffect(() => {
+    saveReaderSettings(settings);
+  }, [settings]);
 
   const canExtract = useMemo(() => {
     return mode === "html" ? html.trim().length > 0 : url.trim().length > 0;
@@ -26,20 +42,63 @@ export function ReaderView() {
     setArticle(null);
 
     try {
-      if (mode === "html") {
-        const result = await window.acuity.reader.extractFromHtml(html);
-        setArticle(result);
-      } else {
-        // URL mode comes in chunk 5.4 (new IPC method)
-        const result = await window.acuity.reader.extractFromUrl(url);
-        setArticle(result);
-      }
+      const result =
+        mode === "html"
+          ? await window.acuity.reader.extractFromHtml(html)
+          : await window.acuity.reader.extractFromUrl(url);
+
+      setArticle(result);
       setStatus("OK");
     } catch (e: any) {
       setStatus(`ERROR: ${e?.message ?? String(e)}`);
     }
   }
 
+  const isDark = settings.theme === "dark";
+
+  if (article) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: isDark ? "#0b0d10" : "#f6f7f9",
+          color: isDark ? "#e8eaf0" : "#111318",
+        }}
+      >
+        <ReaderToolbar
+          settings={settings}
+          setSettings={setSettings}
+          onBackToInput={() => setArticle(null)}
+        />
+
+        <div style={{ display: "flex", justifyContent: "center", padding: "24px 12px" }}>
+          <article
+            style={{
+              width: "100%",
+              maxWidth: settings.maxWidth,
+              background: isDark ? "#0f1115" : "#ffffff",
+              border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.10)",
+              borderRadius: 12,
+              padding: "22px 20px",
+              boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.06)",
+              fontSize: settings.fontSize,
+              lineHeight: settings.lineHeight,
+            }}
+          >
+            <h1 style={{ marginTop: 0, lineHeight: 1.15 }}>{article.title}</h1>
+            {article.byline && <div style={{ opacity: 0.75, marginBottom: 10 }}>{article.byline}</div>}
+            {article.excerpt && <p style={{ opacity: 0.85 }}>{article.excerpt}</p>}
+
+            <hr style={{ opacity: 0.2 }} />
+
+            <div dangerouslySetInnerHTML={{ __html: article.contentHtml }} />
+          </article>
+        </div>
+      </div>
+    );
+  }
+
+  // Input mode (existing UI; keep it simple)
   return (
     <div style={{ padding: 16, fontFamily: "system-ui, sans-serif", display: "grid", gap: 12 }}>
       <h2 style={{ margin: 0 }}>Acuity Reader</h2>
@@ -48,33 +107,34 @@ export function ReaderView() {
         <label>
           <input
             type="radio"
-            checked={mode === "html"}
-            onChange={() => setMode("html")}
-          />{" "}
-          HTML
-        </label>
-        <label>
-          <input
-            type="radio"
             checked={mode === "url"}
             onChange={() => setMode("url")}
           />{" "}
           URL
         </label>
+        <label>
+          <input
+            type="radio"
+            checked={mode === "html"}
+            onChange={() => setMode("html")}
+          />{" "}
+          HTML
+        </label>
       </div>
 
-      {mode === "html" ? (
-        <textarea
-          value={html}
-          onChange={(e) => setHtml(e.target.value)}
-          style={{ width: "100%", height: 180, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
-        />
-      ) : (
+      {mode === "url" ? (
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           style={{ width: "100%", padding: 8 }}
           placeholder="https://example.com/article"
+        />
+      ) : (
+        <textarea
+          value={html}
+          onChange={(e) => setHtml(e.target.value)}
+          style={{ width: "100%", height: 180, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+          placeholder="Paste HTML here"
         />
       )}
 
@@ -84,28 +144,6 @@ export function ReaderView() {
         </button>
         <span><b>Status:</b> {status}</span>
       </div>
-
-      {article && (
-        <div style={{ display: "grid", gap: 8 }}>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 700 }}>{article.title}</div>
-            {article.excerpt && <div style={{ opacity: 0.8 }}>{article.excerpt}</div>}
-          </div>
-
-          <div
-            style={{
-              border: "1px solid rgba(0,0,0,0.15)",
-              borderRadius: 8,
-              padding: 12,
-              maxHeight: 420,
-              overflow: "auto",
-              background: "white",
-            }}
-            // This is why we built sanitization guardrails.
-            dangerouslySetInnerHTML={{ __html: article.contentHtml }}
-          />
-        </div>
-      )}
     </div>
   );
 }
