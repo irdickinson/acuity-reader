@@ -31,10 +31,10 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win: BrowserWindow | null
 let articleStore: JsonArticleStore | null = null;
 
-const IPC_CHANNELS = {
-  extractFromHtml: "reader:extractFromHtml",
-  extractFromUrl: "reader:extractFromUrl",
-} as const;
+// const IPC_CHANNELS = {
+//   extractFromHtml: "reader:extractFromHtml",
+//   extractFromUrl: "reader:extractFromUrl",
+// } as const;
 
 
 function createWindow() {
