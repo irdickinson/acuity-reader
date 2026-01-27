@@ -10,14 +10,14 @@ import {
 import { LibraryView } from "../library/LibraryView";
 import type { SavedArticle } from "../../shared/ipc";
 
-const DEFAULT_HTML = `<!doctype html>
-<html>
-<head><title>Sample</title></head>
-<body>
-  <h1>Acuity Reader</h1>
-  <p>Paste HTML here to test extraction without network.</p>
-</body>
-</html>`;
+// const DEFAULT_HTML = `<!doctype html>
+// <html>
+// <head><title>Sample</title></head>
+// <body>
+//   <h1>Acuity Reader</h1>
+//   <p>Paste HTML here to test extraction without network.</p>
+// </body>
+// </html>`;
 
 export function ReaderView() {
   const [mode, setMode] = useState<"html" | "url">("url");

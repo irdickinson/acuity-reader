@@ -2,7 +2,7 @@
   "name": "desktop",
   "productName": "Acuity Reader",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A local-first reader mode desktop app that turns cluttered web pages into clean, accessible reading views.",
   "author": "Isaac <isaacrdickinson@gmail.com>",
   "type": "module",
@@ -15,10 +15,11 @@
     "build:renderer": "vite build",
     "build": "pnpm typecheck && pnpm build:renderer && electron-builder",
     "pack": "pnpm typecheck && pnpm build:renderer && electron-builder --dir",
-    "dist": "pnpm typecheck && pnpm build:renderer && electron-builder",
 
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rimraf dist dist-electron release",
+    "dist": "pnpm typecheck && pnpm build:renderer && electron-builder"
   },
   "dependencies": {
     "react": "^18.2.0",
@@ -44,7 +45,7 @@
     "wait-on": "^9.0.3"
   },
   "build": {
-    "appId": "com.<yourname>.acuityreader",
+    "appId": "com.irdickinson.acuityreader",
     "productName": "Acuity Reader",
     "directories": {
       "output": "release"
