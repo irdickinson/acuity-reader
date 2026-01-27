@@ -4,9 +4,17 @@ type Props = {
   settings: ReaderSettings;
   setSettings: (next: ReaderSettings) => void;
   onBackToInput: () => void;
+  onSave?: () => void;
 };
 
-export function ReaderToolbar({ settings, setSettings, onBackToInput }: Props) {
+export function ReaderToolbar({
+  settings,
+  setSettings,
+  onBackToInput,
+  onSave,
+}: Props) {
+  const isDark = settings.theme === "dark";
+
   return (
     <div
       style={{
@@ -17,12 +25,19 @@ export function ReaderToolbar({ settings, setSettings, onBackToInput }: Props) {
         gap: 10,
         alignItems: "center",
         padding: "10px 12px",
-        borderBottom: "1px solid rgba(0,0,0,0.12)",
-        background: settings.theme === "dark" ? "#0f1115" : "#ffffff",
+        borderBottom: isDark
+          ? "1px solid rgba(255,255,255,0.08)"
+          : "1px solid rgba(0,0,0,0.12)",
+        background: isDark ? "#0f1115" : "#ffffff",
       }}
     >
+      {/* Back */}
       <button onClick={onBackToInput}>Back</button>
 
+      {/* Save (optional) */}
+      {onSave && <button onClick={onSave}>Save</button>}
+
+      {/* Font size */}
       <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
         Font
         <input
@@ -30,11 +45,19 @@ export function ReaderToolbar({ settings, setSettings, onBackToInput }: Props) {
           min={14}
           max={28}
           value={settings.fontSize}
-          onChange={(e) => setSettings({ ...settings, fontSize: Number(e.target.value) })}
+          onChange={(e) =>
+            setSettings({
+              ...settings,
+              fontSize: Number(e.target.value),
+            })
+          }
         />
-        <span style={{ width: 34, textAlign: "right" }}>{settings.fontSize}px</span>
+        <span style={{ width: 34, textAlign: "right" }}>
+          {settings.fontSize}px
+        </span>
       </label>
 
+      {/* Content width */}
       <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
         Width
         <input
@@ -43,11 +66,19 @@ export function ReaderToolbar({ settings, setSettings, onBackToInput }: Props) {
           max={980}
           step={20}
           value={settings.maxWidth}
-          onChange={(e) => setSettings({ ...settings, maxWidth: Number(e.target.value) })}
+          onChange={(e) =>
+            setSettings({
+              ...settings,
+              maxWidth: Number(e.target.value),
+            })
+          }
         />
-        <span style={{ width: 44, textAlign: "right" }}>{settings.maxWidth}</span>
+        <span style={{ width: 44, textAlign: "right" }}>
+          {settings.maxWidth}
+        </span>
       </label>
 
+      {/* Line height */}
       <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
         Line
         <input
@@ -56,20 +87,32 @@ export function ReaderToolbar({ settings, setSettings, onBackToInput }: Props) {
           max={2.2}
           step={0.05}
           value={settings.lineHeight}
-          onChange={(e) => setSettings({ ...settings, lineHeight: Number(e.target.value) })}
+          onChange={(e) =>
+            setSettings({
+              ...settings,
+              lineHeight: Number(e.target.value),
+            })
+          }
         />
-        <span style={{ width: 34, textAlign: "right" }}>{settings.lineHeight.toFixed(2)}</span>
+        <span style={{ width: 34, textAlign: "right" }}>
+          {settings.lineHeight.toFixed(2)}
+        </span>
       </label>
 
-      <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-        <button
-          onClick={() =>
-            setSettings({ ...settings, theme: settings.theme === "dark" ? "light" : "dark" })
-          }
-        >
-          {settings.theme === "dark" ? "Light" : "Dark"}
-        </button>
-      </div>
+      {/* Spacer */}
+      <div style={{ marginLeft: "auto" }} />
+
+      {/* Theme toggle */}
+      <button
+        onClick={() =>
+          setSettings({
+            ...settings,
+            theme: isDark ? "light" : "dark",
+          })
+        }
+      >
+        {isDark ? "Light" : "Dark"}
+      </button>
     </div>
   );
 }

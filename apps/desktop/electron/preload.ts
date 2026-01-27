@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { ReaderArticle } from "../src/shared/ipc";
+import type { ReaderArticle, SavedArticle, SaveArticleInput } from "../src/shared/ipc";
 
 contextBridge.exposeInMainWorld("acuity", {
   reader: {
@@ -7,6 +7,13 @@ contextBridge.exposeInMainWorld("acuity", {
       ipcRenderer.invoke("reader:extractFromHtml", html),
     extractFromUrl: (url: string): Promise<ReaderArticle> =>
       ipcRenderer.invoke("reader:extractFromUrl", url),
+  },
+  library: {
+    save: (input: SaveArticleInput): Promise<SavedArticle> =>
+      ipcRenderer.invoke("library:save", input),
+    list: (): Promise<SavedArticle[]> => ipcRenderer.invoke("library:list"),
+    get: (id: string): Promise<SavedArticle | null> => ipcRenderer.invoke("library:get", id),
+    delete: (id: string): Promise<{ ok: true }> => ipcRenderer.invoke("library:delete", id),
   },
 });
 

@@ -7,6 +7,8 @@ import {
   saveReaderSettings,
   type ReaderSettings,
 } from "./readerSettings";
+import { LibraryView } from "../library/LibraryView";
+import type { SavedArticle } from "../../shared/ipc";
 
 const DEFAULT_HTML = `<!doctype html>
 <html>
@@ -23,6 +25,7 @@ export function ReaderView() {
   const [url, setUrl] = useState<string>("https://en.wikipedia.org/wiki/Noun");
   const [status, setStatus] = useState<string>("Idle");
   const [article, setArticle] = useState<ReaderArticle | null>(null);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   const [settings, setSettings] = useState<ReaderSettings>(() => {
     // localStorage is available in renderer
@@ -56,6 +59,18 @@ export function ReaderView() {
 
   const isDark = settings.theme === "dark";
 
+  if (showLibrary) {
+    return (
+      <LibraryView
+        onClose={() => setShowLibrary(false)}
+        onOpen={(saved: SavedArticle) => {
+          setShowLibrary(false);
+          setArticle(saved);
+        }}
+      />
+    );
+  }
+
   if (article) {
     return (
       <div
@@ -65,11 +80,16 @@ export function ReaderView() {
           color: isDark ? "#e8eaf0" : "#111318",
         }}
       >
-        <ReaderToolbar
-          settings={settings}
-          setSettings={setSettings}
-          onBackToInput={() => setArticle(null)}
-        />
+      <ReaderToolbar
+        settings={settings}
+        setSettings={setSettings}
+        onBackToInput={() => setArticle(null)}
+        onSave={async () => {
+          const saved = await window.acuity.library.save({ url: mode === "url" ? url : undefined, article });
+          // optional: show a tiny status
+          console.log("Saved:", saved.id);
+        }}
+      />
 
         <div style={{ display: "flex", justifyContent: "center", padding: "24px 12px" }}>
           <article
@@ -97,6 +117,12 @@ export function ReaderView() {
       </div>
     );
   }
+
+
+
+
+
+
 
   // Input mode (existing UI; keep it simple)
   return (
@@ -142,6 +168,7 @@ export function ReaderView() {
         <button onClick={onExtract} disabled={!canExtract}>
           Extract
         </button>
+        <button onClick={() => setShowLibrary(true)}>Library</button>
         <span><b>Status:</b> {status}</span>
       </div>
     </div>
