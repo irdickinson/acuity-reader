@@ -6,7 +6,7 @@ import { pathToFileURL, fileURLToPath } from "node:url"; // make sure both are p
 import { JsonArticleStore } from "./library/jsonStore";
 import type { SaveArticleInput } from "../src/shared/ipc";
 import type { ReaderArticle } from "../src/shared/ipc";
-
+import { extractReadable } from "./extraction";
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -164,20 +164,6 @@ async function fetchHtml(url: string): Promise<string> {
 // }
 
 function registerReaderIpc() {
-  async function loadExtractor() {
-    const repoRoot = path.resolve(process.env.APP_ROOT!, "../..");
-    const entryAbs = path.join(repoRoot, "packages/extraction-core/dist/src/index.js");
-
-    const mod = await import(/* @vite-ignore */ pathToFileURL(entryAbs).href);
-    const extractReadable = mod.extractReadable as ExtractReadable;
-
-    if (!extractReadable) {
-      throw new Error("extractReadable export not found in extraction-core.");
-    }
-
-    return extractReadable;
-  }
-
   function shapeArticle(article: ReaderArticle): ReaderArticle {
     return {
       title: article.title,
@@ -192,14 +178,12 @@ function registerReaderIpc() {
   }
 
   ipcMain.handle("reader:extractFromHtml", async (_event, html: string) => {
-    const extractReadable = await loadExtractor();
     const article = extractReadable(html, { minTextLength: 200 });
     return shapeArticle(article);
   });
 
   ipcMain.handle("reader:extractFromUrl", async (_event, url: string) => {
     const html = await fetchHtml(url);
-    const extractReadable = await loadExtractor();
     const article = extractReadable(html, { minTextLength: 200 });
     return shapeArticle(article);
   });

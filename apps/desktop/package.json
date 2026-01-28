@@ -22,6 +22,8 @@
     "dist": "pnpm typecheck && pnpm build:renderer && electron-builder"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "linkedom": "^0.18.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
