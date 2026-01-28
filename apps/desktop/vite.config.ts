@@ -1,29 +1,42 @@
-import { defineConfig } from 'vite'
-import path from 'node:path'
-import electron from 'vite-plugin-electron/simple'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import electron from "vite-plugin-electron";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    electron({
-      main: {
-        // Shortcut of `build.lib.entry`.
-        entry: 'electron/main.ts',
+    electron([
+      {
+        // IMPORTANT: vite.config.ts is already inside apps/desktop
+        entry: "electron/main.ts",
+        vite: {
+          build: {
+            rollupOptions: {
+              external: [
+                "electron",
+                "linkedom",
+                "@mozilla/readability",
+                "canvas",            // <-- key fix
+              ],
+            },
+          },
+        },
       },
-      preload: {
-        // Shortcut of `build.rollupOptions.input`.
-        // Preload scripts may contain Web assets, so use the `build.rollupOptions.input` instead `build.lib.entry`.
-        input: path.join(__dirname, 'electron/preload.ts'),
+      {
+        entry: "electron/preload.ts",
+        vite: {
+          build: {
+            rollupOptions: {
+              external: ["electron"],
+            },
+          },
+        },
       },
-      // Ployfill the Electron and Node.js API for Renderer process.
-      // If you want use Node.js in Renderer process, the `nodeIntegration` needs to be enabled in the Main process.
-      // See 👉 https://github.com/electron-vite/vite-plugin-electron-renderer
-      renderer: process.env.NODE_ENV === 'test'
-        // https://github.com/electron-vite/vite-plugin-electron-renderer/issues/78#issuecomment-2053600808
-        ? undefined
-        : {},
-    }),
+    ]),
   ],
-})
+
+  // Prevent Vite from prebundling these (also avoids canvas resolution)
+  optimizeDeps: {
+    exclude: ["linkedom", "@mozilla/readability", "canvas"],
+  },
+});
